@@ -5,6 +5,8 @@ extension LetNullableExtension<T extends Object> on T? {
     return this != null ? closure(this!) : null;
   }
 
+  R? wrap<R>(R closure(T it)) => let(closure);
+
   R? run<R>(R? closure(T it)) {
     return this != null ? closure(this!) : null;
   }
@@ -14,6 +16,8 @@ extension LetExtension<T extends Object> on T {
   R let<R>(R closure(T it)) {
     return closure(this);
   }
+
+  R wrap<R>(R closure(T it)) => let(closure);
 
   R? run<R>(R? closure(T it)) {
     return closure(this);
