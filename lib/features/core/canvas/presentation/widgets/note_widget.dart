@@ -1,10 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:note_canvas_application/features/core/canvas/presentation/views/note_canvas_widget/bloc/note_canvas_bloc.dart';
-import 'package:note_canvas_application/features/core/canvas/presentation/views/note_canvas_widget/note_canvas_widget.dart';
-import 'package:note_canvas_application/utility/functional_extension.dart';
+import 'package:note_canvas_application/features/core/canvas/presentation/widgets/draggable_canvas_item.dart';
+import 'package:note_canvas_application/features/core/canvas/presentation/widgets/resizable_canvas_item.dart';
 import 'package:provider/provider.dart';
 
 class NoteWidget extends StatefulWidget {
@@ -39,10 +37,6 @@ class _NoteWidgetState extends State<NoteWidget> {
   NoteEntity get note => widget.note;
 
   bool isEditing = false;
-  bool isDragging = false;
-
-  double? editHeight;
-  double? editWidth;
 
   @override
   void initState() {
@@ -84,79 +78,12 @@ class _NoteWidgetState extends State<NoteWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: isDragging ? .0 : 1.0,
-      child: IgnorePointer(
-        ignoring: isDragging,
-        child: TickerMode(
-          enabled: !isDragging,
-          child: Padding(
-            padding: const EdgeInsets.all(1.0),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Draggable(
-                  data: {'type': 'move', 'id': widget.note.id},
-                  onDragStarted: () => setState(() => isDragging = true),
-                  onDragEnd: (_) => setState(() => isDragging = false),
-                  feedback: DecoratedBox(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          offset: const Offset(0, 6),
-                          blurRadius: 8,
-                          color: Colors.black.withOpacity(.2),
-                        )
-                      ],
-                    ),
-                    child: widget.flying(),
-                  ),
-                  child: buildDraggableChild(context),
-                ),
-                Positioned(
-                  bottom: -5,
-                  right: -5,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onDoubleTap: widget.onToggleHeight,
-                    onPanStart: (details) {
-                      editWidth = widget.note.width;
-                      editHeight = context.size?.height ?? 500;
-                    },
-                    onPanUpdate: (details) {
-                      setState(() {
-                        final width = editWidth;
-                        final height = editHeight;
-                        if (width == null || height == null) return;
-
-                        editWidth = width + details.delta.dx;
-                        editHeight = height + details.delta.dy;
-                      });
-                    },
-                    onPanEnd: (details) {
-                      final width = editWidth;
-                      final height = editHeight;
-                      if (width == null || height == null) return;
-
-                      widget.onSizeChanged(Size(width, height));
-
-                      setState(() {
-                        editWidth = null;
-                        editHeight = null;
-                      });
-                    },
-                    child: Transform.rotate(
-                      angle: pi * 2 / 360 * 45,
-                      child: const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return ResizableCanvasItem(
+      onSizeChanged: widget.onSizeChanged,
+      child: DraggableCanvasItem(
+        data: {'type': 'move', 'id': widget.note.id},
+        child: ResizeHandleProvider.tryWrap(
+          child: buildDraggableChild(context),
         ),
       ),
     );
@@ -166,13 +93,12 @@ class _NoteWidgetState extends State<NoteWidget> {
     return GestureDetector(
       onTap: !isEditing ? () => toggle(to: true) : null,
       child: Container(
-        width: (editWidth.let(clamp) ?? widget.note.width) - 2,
-        height:
-            (editHeight.let(clamp) ?? (note.ignoreHeight || isEditing ? null : widget.note.height)).let((it) => it - 2),
+        width: widget.note.width,
+        height: (note.ignoreHeight || isEditing ? null : widget.note.height),
         decoration: BoxDecoration(
           color: Colors.grey.shade900,
           border: Border.all(
-            color: isEditing ? Colors.white : Colors.black.withOpacity(.1),
+            color: isEditing ? Colors.grey : Color(0xFF1E1E1E),
           ),
           boxShadow: [
             BoxShadow(

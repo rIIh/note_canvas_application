@@ -1,8 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-class ToolbarButton extends StatelessWidget {
+class ToolbarButton extends StatefulWidget {
   final bool isActive;
   final Widget child;
 
@@ -13,19 +11,33 @@ class ToolbarButton extends StatelessWidget {
   });
 
   @override
+  State<ToolbarButton> createState() => _ToolbarButtonState();
+}
+
+class _ToolbarButtonState extends State<ToolbarButton> {
+  bool isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadiusDirectional.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-        child: Container(
+    return FocusableActionDetector(
+      onShowHoverHighlight: (value) => setState(() => isHovered = value),
+      child: ClipRRect(
+        borderRadius: BorderRadiusDirectional.circular(18),
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 120),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(.25),
-            borderRadius: BorderRadiusDirectional.circular(24),
+            color: widget.isActive || isHovered ? Colors.white.withOpacity(.05) : Colors.white.withAlpha(0),
+            borderRadius: BorderRadiusDirectional.circular(18),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: child,
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: FittedBox(
+                child: widget.child,
+              ),
+            ),
           ),
         ),
       ),
